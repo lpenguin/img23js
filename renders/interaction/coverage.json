@@ -1,0 +1,16 @@
+{
+  "model": "Machinist Bench Vise with Swivel Base",
+  "specifiedComponents": 28,
+  "builtParts": 29,
+  "errors": 0,
+  "warnings": 0,
+  "result": "pass",
+  "findings": [
+    {
+      "check": "part-not-specified",
+      "severity": "info",
+      "subject": "base-plate",
+      "detail": "built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)"
+    }
+  ]
+}

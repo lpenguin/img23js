@@ -1,0 +1,239 @@
+{
+ "model": "Machinist Bench Vise with Swivel Base",
+ "parts": [
+  {
+   "name": "base-plate",
+   "label": "Four-lobed swivel base plate",
+   "kind": "part",
+   "module": "root",
+   "level": "macro",
+   "triangles": 908
+  },
+  {
+   "name": "base-boss",
+   "label": "Raised swivel seat boss",
+   "kind": "part",
+   "module": "base-plate",
+   "level": "meso",
+   "triangles": 384
+  },
+  {
+   "name": "base-bolt-1",
+   "label": "Base mounting bolt head 1",
+   "kind": "part",
+   "module": "base-plate",
+   "level": "micro",
+   "triangles": 48
+  },
+  {
+   "name": "base-bolt-2",
+   "label": "Base mounting bolt head 2",
+   "kind": "part",
+   "module": "base-plate",
+   "level": "micro",
+   "triangles": 48
+  },
+  {
+   "name": "base-bolt-3",
+   "label": "Base mounting bolt head 3",
+   "kind": "part",
+   "module": "base-plate",
+   "level": "micro",
+   "triangles": 48
+  },
+  {
+   "name": "base-bolt-4",
+   "label": "Base mounting bolt head 4",
+   "kind": "part",
+   "module": "base-plate",
+   "level": "micro",
+   "triangles": 48
+  },
+  {
+   "name": "swivel-collar",
+   "label": "Swivel collar",
+   "kind": "part",
+   "module": "base-plate",
+   "level": "macro",
+   "triangles": 1632
+  },
+  {
+   "name": "collar-flange",
+   "label": "Swivel collar upper flange",
+   "kind": "part",
+   "module": "swivel-collar",
+   "level": "meso",
+   "triangles": 384
+  },
+  {
+   "name": "swivel-lock-bolt",
+   "label": "Swivel lock bolt",
+   "kind": "part",
+   "module": "swivel-collar",
+   "level": "micro",
+   "triangles": 48
+  },
+  {
+   "name": "body-casting",
+   "label": "Main body casting",
+   "kind": "part",
+   "module": "swivel-collar",
+   "level": "macro",
+   "triangles": 36
+  },
+  {
+   "name": "body-plateau-pad",
+   "label": "Top plateau anvil pad",
+   "kind": "part",
+   "module": "body-casting",
+   "level": "meso",
+   "triangles": 1728
+  },
+  {
+   "name": "body-foot-fastener",
+   "label": "Body foot fastener",
+   "kind": "part",
+   "module": "body-casting",
+   "level": "micro",
+   "triangles": 48
+  },
+  {
+   "name": "nut-boss",
+   "label": "Lead-screw nut boss",
+   "kind": "part",
+   "module": "body-casting",
+   "level": "meso",
+   "triangles": 384
+  },
+  {
+   "name": "fixed-jaw-riser",
+   "label": "Fixed jaw riser (hooked)",
+   "kind": "part",
+   "module": "body-casting",
+   "level": "macro",
+   "triangles": 44
+  },
+  {
+   "name": "fixed-jaw-gusset",
+   "label": "Fixed jaw riser gusset",
+   "kind": "part",
+   "module": "fixed-jaw-riser",
+   "level": "meso",
+   "triangles": 1728
+  },
+  {
+   "name": "fixed-jaw-plate",
+   "label": "Fixed serrated jaw plate",
+   "kind": "part",
+   "module": "fixed-jaw-riser",
+   "level": "meso",
+   "triangles": 144
+  },
+  {
+   "name": "slide-carriage",
+   "label": "Movable jaw slide bar",
+   "kind": "part",
+   "module": "body-casting",
+   "level": "macro",
+   "triangles": 1728
+  },
+  {
+   "name": "movable-jaw-riser",
+   "label": "Movable jaw riser (hooked)",
+   "kind": "part",
+   "module": "slide-carriage",
+   "level": "macro",
+   "triangles": 44
+  },
+  {
+   "name": "movable-jaw-gusset",
+   "label": "Movable jaw riser gusset",
+   "kind": "part",
+   "module": "movable-jaw-riser",
+   "level": "meso",
+   "triangles": 1728
+  },
+  {
+   "name": "movable-jaw-plate",
+   "label": "Movable serrated jaw plate",
+   "kind": "part",
+   "module": "movable-jaw-riser",
+   "level": "meso",
+   "triangles": 144
+  },
+  {
+   "name": "thrust-lobe",
+   "label": "Screw thrust lobe",
+   "kind": "part",
+   "module": "slide-carriage",
+   "level": "macro",
+   "triangles": 576
+  },
+  {
+   "name": "thrust-ring",
+   "label": "Knurled thrust ring",
+   "kind": "part",
+   "module": "thrust-lobe",
+   "level": "meso",
+   "triangles": 480
+  },
+  {
+   "name": "screw-head-boss",
+   "label": "Cross-drilled screw head",
+   "kind": "part",
+   "module": "thrust-ring",
+   "level": "meso",
+   "triangles": 384
+  },
+  {
+   "name": "tommy-bar",
+   "label": "Tommy bar",
+   "kind": "part",
+   "module": "screw-head-boss",
+   "level": "macro",
+   "triangles": 200
+  },
+  {
+   "name": "bar-ball-plus",
+   "label": "Tommy bar ball end (plus)",
+   "kind": "part",
+   "module": "tommy-bar",
+   "level": "meso",
+   "triangles": 4992
+  },
+  {
+   "name": "bar-ball-minus",
+   "label": "Tommy bar ball end (minus)",
+   "kind": "part",
+   "module": "tommy-bar",
+   "level": "meso",
+   "triangles": 4992
+  },
+  {
+   "name": "lead-screw-shaft",
+   "label": "Lead screw core shaft",
+   "kind": "part",
+   "module": "slide-carriage",
+   "level": "macro",
+   "triangles": 240
+  },
+  {
+   "name": "screw-thread-mid",
+   "label": "Exposed acme thread run (mid)",
+   "kind": "part",
+   "module": "lead-screw-shaft",
+   "level": "meso",
+   "triangles": 4716
+  },
+  {
+   "name": "screw-thread-tail",
+   "label": "Exposed acme thread run (tail)",
+   "kind": "part",
+   "module": "lead-screw-shaft",
+   "level": "meso",
+   "triangles": 852
+  }
+ ],
+ "unnamedMeshes": 0,
+ "integralMeshes": 1
+}

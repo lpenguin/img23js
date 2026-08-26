@@ -1,1 +1,10 @@
 .claude/settings.local.json
+node_modules/
+dist/
+
+# World-space geometry dumps for the reference-free gates. Regenerate with
+#   node tools/export_geometry.mjs --meshes renders/<pass>/meshes.json
+# They are ~2 MB each and derive entirely from the committed factory, so the gate
+# verdicts are kept in reviewHistory rather than the inputs that produced them.
+renders/*/meshes.json
+__pycache__/
