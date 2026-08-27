@@ -1,11 +1,11 @@
 # Layered image analysis — bench vise (reference: conversation attachment)
 
-> **Reference availability.** The reference was supplied as a conversation attachment and is
-> readable by agent vision only; no image file exists on this container's disk. Every pixel-level
-> script gate (`probe_image.py`, `check_reference_admission.py`, `build_detail_inventory.py` crops,
-> `extract_pbr_evidence.py`, `make_comparison_sheet.py`) is therefore recorded as `skipped` with a
-> reason in `.img2threejs/state.json`. Agent-vision observation below is the reference evidence of
-> record; render review is done by the agent comparing captured PNGs against the attachment.
+> **Reference availability.** The reference arrived twice: first as a conversation attachment
+> readable by agent vision only, then as a file (`reference/bench-vise.png`, 2000x1104, converted
+> from the supplied `.webp`). Everything below was written from the attachment; the **Measured**
+> section at the end records what changed once the file made pixel measurement possible, and the
+> gates it unblocked. Where the two disagree, the measured numbers win and the original wording is
+> left in place so the correction is visible rather than quietly overwritten.
 
 ## Layer 1 — Identification & classification
 
@@ -123,3 +123,68 @@ inventory entry and a `featureReviewTarget`:
   and expresses all dimensions in metres relative to that.
 - Rear geometry is reconstructed by **mirroring the observed front half** and is labelled
   inference, not observation.
+
+
+---
+
+# Measured (after the reference file arrived)
+
+The attachment-only pass got the object right and several dimensions wrong. This section records
+what changed and what stayed, so the difference between "observed by eye" and "measured" is legible.
+
+## Method
+
+The object is the largest connected foreground component of the plate at luminance threshold 178,
+which is above the contact shadow (the shadow bottoms out around 195, the object's lit surfaces run
+110-200). It spans **x 402..1685, y 255..961** in a 2000x1104 frame: **1284 x 707 px, aspect 1.816**.
+
+Two anchors fix the frame against the model: the jaw top is Y 2.22 and the mounting plane is Y 0.
+**Vertical** values transfer directly, because both images span the same two semantic landmarks.
+**Horizontal** values transfer as a fraction of object width, never through the vertical scale --
+the reference's camera carries an unknown elevation, and elevation inflates measured height without
+touching width, so one px/unit derived from the vertical would shorten every X landmark by about 7%.
+
+That trap is real and it was nearly walked into. The control that caught it is
+`renders/reference-gates/ortho.png`: the same model rendered at azimuth 0, elevation 0, where the
+projected bbox IS the world X:Y ratio. It reads 1.866 against 1.731 at the review camera, so the gap
+between world aspect and projected aspect is the camera, not the geometry.
+
+## What was wrong
+
+| | attachment-only | measured | effect |
+|---|---|---|---|
+| jaw plate depth | 0.15 | **0.234** | read as a toothed veneer, not a hardened insert |
+| jaw plate height | 0.42 | **0.242** | plate ran most of the jaw face instead of capping it |
+| jaw riser inner face | a concave arc | **an S-curve** | the undercut the screw passes through was missing |
+| screw crest radius | 0.135 | **0.185** | screw was visibly thin for its jaw |
+| screw axis height | 1.30 | **1.21** | screw floated above the slide instead of sitting on it |
+| slide bar depth | 0.22 | **0.50** | the bar was a plate where the reference has a beam |
+| body bottom / top | 0.36 / 1.66 | **0.45 / 1.71** | body sat too low and too short |
+| base half-extent | 0.769 | **0.85** | base read small under the casting |
+| tommy bar lean | bottom toward -X | **bottom toward +X** | sign error; the two balls were offset the wrong way |
+| cast albedo | cool (B above R) | **warm-neutral (R about 5 above B)** | render read blue against the reference's grey |
+| exposure | body face at 149 | **reference is 122** | render was about 25 levels hot |
+| contact shadow | cast half the object's length | **reaches only X 2.4 of 3.2** | reference's key is steep; it is a contact smudge |
+
+## What held
+
+Overall proportion, every macro assembly, the component hierarchy, the four-lobed base, the two
+exposed thread runs, the knurled ring, the hooked-jaw reading, and the mirror relationship between
+the jaws all survived measurement unchanged. The eye got the structure right and the sizes wrong.
+
+## Gates the file unblocked
+
+| gate | result |
+|---|---|
+| `probe_image.py` | pass, 2000x1104 |
+| `check_reference_admission.py` | **admitted**, foreground coverage 0.266, largest component 0.998 |
+| `diagnose_render.py` (Tier 1) | aspect delta **0.021** (threshold 0.05), scale delta **0.007** (0.08), silhouette IoU **0.837** (0.85) -- fails on IoU alone |
+| `divine_eye.py` | fidelity 0.681, `low-confidence` / `probe`, `reconstructionModeSuspected: true`; SSIM 0.922, pHash 0.875, objectness 0.741 |
+| `interior_difference.py` | **0.128** over 12,353 cells, no mask warnings |
+| `extract_pbr_evidence.py` | pass on all four crops: cast-iron 0.716, machined-steel 0.784, oxide-screw 0.794, polished-handle 0.86 |
+
+Only the cast-iron crop was cleanly isolated (value range 0.087, wholly inside the body face); its
+palette `#7B7A76 #757570 #807F7B` is what the authored albedos were corrected against. The other
+three crops caught backdrop, so their palettes are recorded as evidence and not adopted. No extracted
+map is applied as a texture: the crops are of a lit studio render, and projecting their albedo onto
+geometry this scene lights again would double-light it.

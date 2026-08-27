@@ -1,0 +1,88 @@
+{
+  "ok": true,
+  "verdict": "pass",
+  "confidence": 0.794,
+  "estimatedFidelity": 0.794,
+  "targetThreshold": 0.7,
+  "materialId": "oxide-screw",
+  "sourceImage": "/home/user/img23js/material-evidence/crop-oxide-screw.png",
+  "outDir": "/home/user/img23js/material-evidence",
+  "palette": [
+    "#F5F4F6",
+    "#828282",
+    "#A8A8A8",
+    "#515150",
+    "#CECECF"
+  ],
+  "maps": {
+    "albedo": {
+      "path": "/home/user/img23js/material-evidence/oxide-screw_albedo.png",
+      "url": "oxide-screw_albedo.png",
+      "channel": "albedo",
+      "source": "reference-pixel-extraction"
+    },
+    "roughness": {
+      "path": "/home/user/img23js/material-evidence/oxide-screw_roughness.png",
+      "url": "oxide-screw_roughness.png",
+      "channel": "roughness",
+      "source": "reference-pixel-extraction"
+    },
+    "height": {
+      "path": "/home/user/img23js/material-evidence/oxide-screw_height.png",
+      "url": "oxide-screw_height.png",
+      "channel": "height",
+      "source": "reference-pixel-extraction"
+    },
+    "normal": {
+      "path": "/home/user/img23js/material-evidence/oxide-screw_normal.png",
+      "url": "oxide-screw_normal.png",
+      "channel": "normal",
+      "source": "reference-pixel-extraction"
+    },
+    "ao": {
+      "path": "/home/user/img23js/material-evidence/oxide-screw_ao.png",
+      "url": "oxide-screw_ao.png",
+      "channel": "ao",
+      "source": "reference-pixel-extraction"
+    }
+  },
+  "diagnostics": {
+    "sourceWidth": 200,
+    "sourceHeight": 60,
+    "mapSize": 1024,
+    "cropBBoxPixels": {
+      "x": 0,
+      "y": 0,
+      "width": 200,
+      "height": 60
+    },
+    "mask": {
+      "backgroundColor": "#F6F5F8",
+      "backgroundNoise": 220.558,
+      "transparentPixelFraction": 0.0,
+      "foregroundCoverage": 1.0
+    },
+    "mapStats": {
+      "valueRange": 0.6714,
+      "heightP90Gradient": 0.06302,
+      "roughnessBase": 0.712,
+      "roughnessVariation": 0.145,
+      "normalStrength": 0.23,
+      "blurRadius": 21
+    },
+    "palette": [
+      "#F5F4F6",
+      "#828282",
+      "#A8A8A8",
+      "#515150",
+      "#CECECF"
+    ]
+  },
+  "warnings": [
+    "foreground mask is tiny; material extraction is likely unreliable",
+    "image is not clearly isolated from background; using most pixels as material evidence",
+    "object/background separation is weak",
+    "single-image inverse rendering cannot prove true physical PBR; confidence is capped"
+  ],
+  "limitation": "single-image PBR extraction is an estimate; 70%+ extraction confidence still needs render screenshot review"
+}

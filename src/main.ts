@@ -29,7 +29,8 @@ const num = (key: string, fallback: number) => {
   return Number.isFinite(value) ? value : fallback;
 };
 
-const VIEWS: Record<string, { azimuth: number; elevation: number; zoom: number }> = {
+const VIEWS: Record<string, { azimuth: number; elevation: number; zoom: number;
+                              panX?: number; panY?: number }> = {
   // Matches the reference framing: near-orthographic side view, a few degrees above eye
   // level, rotated slightly so a sliver of the front face shows.
   front: { azimuth: 8, elevation: 4, zoom: 1.0 },
@@ -38,6 +39,17 @@ const VIEWS: Record<string, { azimuth: number; elevation: number; zoom: number }
   left: { azimuth: 270, elevation: 6, zoom: 1.0 },
   top: { azimuth: 8, elevation: 78, zoom: 1.0 },
   hero: { azimuth: 38, elevation: 18, zoom: 0.92 },
+  // Framing-matched plate for the reference gates. Divine Eye and Tier-1 diagnostics compare
+  // pixels, so a framing difference reads as a proportion defect: the object has to land on
+  // the same bounding box the reference's does, in a frame of the same size.
+  // Converged against reference/bench-vise.png: at azimuth 6 / elevation 2 this geometry
+  // projects to aspect 1.80 against the reference's 1.816, and the zoom puts the object on
+  // the same 0.642 x 0.640 fraction of the frame so a pixel gate scores shape, not framing.
+  match: { azimuth: 6, elevation: 2, zoom: 0.819, panX: -0.0295, panY: 0.0662 },
+  // Pure side elevation, no azimuth and no elevation: the projected bbox of this view is the
+  // model's own world X:Y ratio (modulo perspective), which is the control that separates a
+  // geometry error from a camera error.
+  ortho: { azimuth: 0, elevation: 0, zoom: 1.0 },
 };
 
 const canvas = document.getElementById('stage') as HTMLCanvasElement;
@@ -50,7 +62,7 @@ const shadowsOn = params.get('shadows') !== '0';
 renderer.shadowMap.enabled = shadowsOn;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 configureRenderer(renderer);
-renderer.toneMappingExposure = num('exposure', 1.05);
+renderer.toneMappingExposure = num('exposure', 0.90);
 
 const scene = new THREE.Scene();
 
@@ -65,7 +77,7 @@ pmrem.dispose();
 // RoomEnvironment at full strength washes every casting toward the backdrop value and
 // collapses the four machining finishes into one bright grey -- the reference's screw sits
 // visibly darker than its castings and that separation only survives at reduced intensity.
-scene.environmentIntensity = num('env', 0.85);
+scene.environmentIntensity = num('env', 0.70);
 
 const model = createViseModel({ castShadow: true, receiveShadow: true });
 scene.add(model);
@@ -78,7 +90,7 @@ const ground = new THREE.Mesh(
   // The reference's contact shadow is light and very soft -- a low-contrast smudge under the
   // base, not a silhouette on the floor. At 0.28 the render's shadow was the darkest thing in
   // the frame, which no surface of the object itself is.
-  new THREE.ShadowMaterial({ opacity: num('shadow', 0.19) }),
+  new THREE.ShadowMaterial({ opacity: num('shadow', 0.09) }),
 );
 ground.rotation.x = -Math.PI / 2;
 ground.receiveShadow = true;
@@ -104,7 +116,7 @@ scene.add(lights);
 // A broad, low-intensity frontal fill. The reference's front faces sit only slightly below its
 // top plateau in value, which a key-plus-hemisphere rig alone cannot do: the hemisphere is
 // vertical, so it darkens the front and the side by the same amount.
-const frontFill = new THREE.DirectionalLight(0xeaf0f8, 0.5);
+const frontFill = new THREE.DirectionalLight(0xf4f1ec, 0.5);
 frontFill.position.set(1.5, 1.2, 6.0).multiplyScalar(MODEL_LENGTH * 0.6);
 scene.add(frontFill);
 
@@ -124,7 +136,13 @@ controls.minDistance = MODEL_LENGTH * 0.4;
 controls.maxDistance = MODEL_LENGTH * 6;
 controls.target.set(0.7, 1.1, 0);
 
-const view = VIEWS[params.get('view') ?? 'front'] ?? VIEWS.front;
+const view = { ...(VIEWS[params.get('view') ?? 'front'] ?? VIEWS.front) };
+view.zoom *= num('zoom', 1);
+// The reference's own camera elevation and azimuth are unknown; these overrides are what
+// makes converging the match view onto its framing a search over the CAMERA rather than a
+// temptation to bend the geometry until the numbers agree.
+view.azimuth = num('az', view.azimuth);
+view.elevation = num('el', view.elevation);
 placeCamera(view.azimuth, view.elevation, view.zoom);
 
 // ---------------------------------------------------------------- articulation
@@ -279,15 +297,21 @@ function tuneLights(group: THREE.Group): void {
     // one it flattens the shaded flank the reference clearly shows.
     if (hemi.isHemisphereLight) {
       hemi.intensity *= 0.45;
-      hemi.color.setHex(0xf4f6f8);
-      hemi.groundColor.setHex(0x3d4146);
+      hemi.color.setHex(0xf7f5f1);
+      hemi.groundColor.setHex(0x45423e);
     }
     const light = child as THREE.DirectionalLight;
     if (!light.isDirectionalLight) return;
+    // Measured on the reference: its shadow reaches only about X 2.4 while the object runs to
+    // X 3.2, so it is a short contact smudge under the base, not a cast silhouette of the whole
+    // vise. That means a steep key. At the generated 48-degree elevation the render threw a
+    // shadow half the object's length, and the Tier-1 mask read it as part of the object --
+    // aspect delta 0.181 against a 0.05 threshold, entirely from the shadow.
+    if (light.castShadow) light.position.set(-1.3, 11.0, 2.2);
     // The 'reference' look-dev mode ships a warm tungsten key (0xffcf8a). This reference is a
     // neutral studio plate -- its greys are achromatic to within a couple of points -- so a warm
     // key tints every casting brown and the finish separation stops reading as metal.
-    light.color.setHex(light.intensity > 1 ? 0xfffdfa : 0xeef2f8);
+    light.color.setHex(light.intensity > 1 ? 0xfffcf6 : 0xf6f3ee);
     light.position.multiplyScalar(MODEL_LENGTH * 0.6);
     if (!light.castShadow) return;
     light.shadow.radius = 14;
@@ -329,6 +353,10 @@ function placeCamera(azimuthDeg: number, elevationDeg: number, zoom: number): vo
   const distance = (Math.max(fitH, fitW) + size.z * 0.5) * 1.16 / zoom;
   const az = THREE.MathUtils.degToRad(azimuthDeg);
   const el = THREE.MathUtils.degToRad(elevationDeg);
+  // Sub-pixel framing nudges, in fractions of the frame, so a match view can be converged
+  // onto the reference's bounding box without moving the model itself.
+  centre.x += size.x * num('panx', view.panX ?? 0);
+  centre.y += size.y * num('pany', view.panY ?? 0);
   camera.position.set(
     centre.x + Math.sin(az) * Math.cos(el) * distance,
     centre.y + Math.sin(el) * distance,

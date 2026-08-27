@@ -1,0 +1,86 @@
+{
+  "ok": true,
+  "verdict": "pass",
+  "confidence": 0.784,
+  "estimatedFidelity": 0.784,
+  "targetThreshold": 0.7,
+  "materialId": "machined-steel",
+  "sourceImage": "/home/user/img23js/material-evidence/crop-machined-steel.png",
+  "outDir": "/home/user/img23js/material-evidence",
+  "palette": [
+    "#F5F6F6",
+    "#D1D1D2",
+    "#E9E9EA",
+    "#F9F9FA",
+    "#3B3B39"
+  ],
+  "maps": {
+    "albedo": {
+      "path": "/home/user/img23js/material-evidence/machined-steel_albedo.png",
+      "url": "machined-steel_albedo.png",
+      "channel": "albedo",
+      "source": "reference-pixel-extraction"
+    },
+    "roughness": {
+      "path": "/home/user/img23js/material-evidence/machined-steel_roughness.png",
+      "url": "machined-steel_roughness.png",
+      "channel": "roughness",
+      "source": "reference-pixel-extraction"
+    },
+    "height": {
+      "path": "/home/user/img23js/material-evidence/machined-steel_height.png",
+      "url": "machined-steel_height.png",
+      "channel": "height",
+      "source": "reference-pixel-extraction"
+    },
+    "normal": {
+      "path": "/home/user/img23js/material-evidence/machined-steel_normal.png",
+      "url": "machined-steel_normal.png",
+      "channel": "normal",
+      "source": "reference-pixel-extraction"
+    },
+    "ao": {
+      "path": "/home/user/img23js/material-evidence/machined-steel_ao.png",
+      "url": "machined-steel_ao.png",
+      "channel": "ao",
+      "source": "reference-pixel-extraction"
+    }
+  },
+  "diagnostics": {
+    "sourceWidth": 300,
+    "sourceHeight": 40,
+    "mapSize": 1024,
+    "cropBBoxPixels": {
+      "x": 0,
+      "y": 0,
+      "width": 300,
+      "height": 35
+    },
+    "mask": {
+      "backgroundColor": "#808080",
+      "backgroundNoise": 46.39,
+      "transparentPixelFraction": 0.0,
+      "foregroundCoverage": 0.1771
+    },
+    "mapStats": {
+      "valueRange": 0.2157,
+      "heightP90Gradient": 0.01212,
+      "roughnessBase": 0.68,
+      "roughnessVariation": 0.05,
+      "normalStrength": 0.17,
+      "blurRadius": 21
+    },
+    "palette": [
+      "#F5F6F6",
+      "#D1D1D2",
+      "#E9E9EA",
+      "#F9F9FA",
+      "#3B3B39"
+    ]
+  },
+  "warnings": [
+    "single-image inverse rendering cannot prove true physical PBR; confidence is capped",
+    "low value range weakens height/roughness inference"
+  ],
+  "limitation": "single-image PBR extraction is an estimate; 70%+ extraction confidence still needs render screenshot review"
+}

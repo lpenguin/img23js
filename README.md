@@ -21,7 +21,7 @@ npm run build
 | | |
 |---|---|
 | Parts | 29 named, individually selectable and separable |
-| Triangles | 15,040 |
+| Triangles | 15,152 |
 | Draw calls | 30 (29 meshes + 1 instanced knurl ring) |
 | Materials | 5 finishes of one bare-ferrous-metal family, all metalness 1.0 |
 | Kinematics | jaw travel, base swivel, screw spin geared to travel, handle slide |
@@ -39,22 +39,35 @@ path:
 ?shadows=0                             shadow-free plate for silhouette measurement
 ?ui=0                                  hide the control panel
 ?env= ?exposure= ?shadow=              lighting overrides
+?az= ?el= ?zoom= ?panx= ?pany=         camera overrides (used to converge `view=match`)
 ```
+
+Two views exist for measurement rather than looking: **`match`** reproduces the reference's own
+framing (object on the same 0.642 x 0.640 fraction of a 2000x1104 frame, same centre) so a pixel
+gate scores shape instead of framing, and **`ortho`** renders at azimuth 0 / elevation 0, where the
+projected bounding box IS the model's world X:Y ratio — the control that tells a geometry error
+apart from a camera one.
 
 ## Layout
 
 ```
 object-sculpt-spec.json   the authored spec: 29 components, 5 materials, 5 repetition
-                          systems, quality contract, and the full 8-pass review history
+                          systems, quality contract, and the full review history
 assessment.json           pre-spec assessment and quality contract
-reference/                layered image analysis and the suitability verdict
+reference/                the reference image, the layered analysis, the suitability verdict
+material-evidence/        extracted reference PBR maps and their confidence reports
 src/createBenchViseModel.ts  generated factory — do not hand-edit, see below
 src/main.ts               review harness: scene, lighting, articulation, picking, explode
 tools/build_spec.py       authors object-sculpt-spec.json from measured landmarks
 tools/capture.mjs         headless render capture
 tools/export_geometry.mjs world-space geometry + part manifest for the gates
-tools/silhouette_metrics.py, tools/sample_patch.py   measured proportions and tones
+tools/silhouette_metrics.py, tools/object_bbox.py    silhouette measurement
+tools/profile_compare.py, tools/mask_overlay.py     shape diff against the reference
+tools/sample_patch.py, tools/crop.mjs               tone measurement, detail inspection
+tools/webp_to_png.mjs     image conversion through the pre-installed Chromium
 renders/<pass>/           per-pass review evidence
+renders/reference-gates/  the framing-matched plate, the ortho control, the silhouette
+                          difference map and the reference/render comparison sheet
 ```
 
 ### Rebuilding
@@ -96,39 +109,64 @@ gate reads.
 Frame: **+X longitudinal** (movable jaw toward +X), **+Y up**, **+Z toward the reference
 camera**, right-handed. Origin at the base disc centre on the mounting plane. **1 unit = 100 mm.**
 
-## Fidelity: what is observed and what is not
+## Fidelity: measured
 
-The reference is a single near-orthographic side view. That fixes a great deal and hides a great
-deal, and this section is the honest accounting.
+The reference is a single near-orthographic side view. It was first supplied as a conversation
+attachment — readable by eye, not by any script — and the model was built and gated that way through
+all eight passes. The image file arrived afterwards, which made every pixel gate runnable and turned
+a set of eye estimates into measurements. Both stages are recorded in
+`reference/REFERENCE_ANALYSIS.md`; the corrections the file forced are listed there in full.
 
-**Measured off the reference** — overall width : height 1.95 (model: 1.946), base disc 0.36 of
-overall length (0.356), jaw opening 0.09 (0.093), screw axis height, jaw top, both jaw faces,
-the screw tail end, and the thread pitch to about ±2 turns over the long run.
+**What measurement changed.** The jaw riser's inner face is an S-curve, not the arc that was
+authored — it falls back to X 0.799 at Y 1.731, bulges to 0.859 at Y 1.580, then returns to the
+casting. The jaw plate is 0.234 deep by 0.242 tall, not 0.15 by 0.42. The screw is fatter
+(crest radius 0.185) and sits 0.09 lower, resting on the slide bar as the reference's does. The
+slide bar is a 0.50 beam, not a 0.22 plate. The tommy bar's lean was the wrong **sign**. Every
+authored albedo was cool where the reference measures warm-neutral, and the render was about 25
+levels hot.
 
-**Inference, not observation** — the entire −Z half is mirrored from the observed +Z half; the
-base underside, the nut-boss interior and the slide channel are built to engineering convention;
-the base lobes' 45° azimuth is a conventional square four-bolt pattern (the side view fixes only
-their longitudinal extent); the absolute scale is a convention (102 mm jaw width), since the
-reference carries no scale cue.
+**What measurement confirmed.** Overall proportion, every macro assembly, the component hierarchy,
+the four-lobed base, the two exposed thread runs, the knurled ring and the mirror relationship
+between the jaws all survived unchanged. The eye got the structure right and the sizes wrong.
 
-**Approximations, stated** — the thread section is round rather than a trapezoidal acme flank;
-the knurl is straight, not diamond; serration pitch is below what the reference can resolve; the
-jaw-riser scallop is a polyline and facets at close range; a faint periodic noise lattice remains
-on the largest flat cast faces under grazing light.
+**One trap worth naming.** Converting the reference's horizontal landmarks through its *vertical*
+scale would have shortened every X landmark by about 7%, because the reference's unknown camera
+elevation inflates measured height without touching width. The `ortho` control render is what
+separated the two, and the geometry was left alone.
 
-### The one gate that could not run
+### Gate results, measured against the reference
 
-The reference was supplied as a **conversation attachment with no file on disk**. Every
-pixel-level gate in the pipeline therefore never ran on this reconstruction:
-`diagnose_render.py` (Tier 1), Divine Eye, `interior_difference.py`, `check_reference_admission.py`
-and `extract_pbr_evidence.py` all require reference pixels. There is no true side-by-side sheet
-either — `renders/*/review-sheet.png` pairs each render with an **observation panel that states on
-its own face that it is not the reference image**, carrying the measured landmarks instead.
+| gate | result |
+|---|---|
+| `check_reference_admission` | **admitted** — coverage 0.266, largest component 0.998 |
+| `diagnose_render` (Tier 1) | aspect delta **0.021** (threshold 0.05) ✓ · scale delta **0.007** (0.08) ✓ · silhouette IoU **0.837** (0.85) ✗ |
+| `divine_eye` | fidelity 0.681 · `low-confidence` / `probe` · `reconstructionModeSuspected` · SSIM 0.922 · pHash 0.875 · objectness 0.741 |
+| `interior_difference` | **0.128** over 12,353 cells, no mask warnings |
+| `extract_pbr_evidence` | pass ×4 — 0.716 / 0.784 / 0.794 / 0.86 against 0.70 |
+| `turntable_gate` · `diagnose_render_multi_angle` · `self_intersection` · `check_part_coverage` | all clean |
 
-So the PBR channel values here are agent-vision observations calibrated against the reference's
-specular behaviour, not extracted measurements, and that is weaker evidence. The gates that *are*
-reference-free did run clean at every pass: turntable coverage at four azimuths, multi-angle
-collapse, self-intersection on the exported world-space geometry, and part coverage.
+Measured tone at matched patches: body face reference `rgb(122,121,117)` against render
+`rgb(119,118,111)`; jaw plate `rgb(131,131,130)` against `rgb(136,134,127)`.
 
-**If you add the image at `reference/bench-vise.png`, all of those gates become runnable** and the
-review can be re-scored against measured pixel evidence rather than observation.
+**Silhouette IoU 0.837 is the one gate still short of its 0.85 threshold**, and it is not being
+chased. The residual is distributed few-pixel edge offsets plus the reference's own contact shadow,
+not one locatable defect, and the skill's own guidance is explicit that for a photo-vs-procedural
+pair IoU is dominated by framing and lighting — optimising toward it distorts the model. Divine Eye
+reaching `probe` rather than `reject`, via its reconstruction-mode rescue, is the intended outcome
+for this class of comparison.
+
+### Still inference, not observation
+
+The entire −Z half is mirrored from the observed +Z half. The base underside, the nut-boss interior
+and the slide channel are built to engineering convention. The base lobes' 45° azimuth is a
+conventional square four-bolt pattern — the side view fixes only their longitudinal extent. Absolute
+scale is a convention (102 mm jaw width); the reference carries no scale cue.
+
+### Known gaps
+
+The jaw plate's two fixing-screw slots are not modelled. The castings have no Z-direction fillets:
+the generator extrudes with `bevelEnabled: false`, so only the profile's own corners are rounded.
+The body's cast panel line is missing. The thread section is round rather than a trapezoidal acme
+flank, and the knurl is straight rather than diamond. Three of the four PBR crops caught backdrop,
+so only the cast-iron palette was adopted; no extracted map is applied as a texture, because the
+crops are of a lit studio render and would double-light the model.

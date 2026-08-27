@@ -28,9 +28,9 @@
     {
       "id": "reference-admission",
       "scope": "setup",
-      "status": "skipped",
-      "evidence": [],
-      "reason": "check_reference_admission.py needs image bytes; the reference exists only as a conversation attachment, no file on disk. Suitability recorded by agent vision in reference/SUITABILITY.md instead.",
+      "status": "done",
+      "evidence": "reference/bench-vise.png",
+      "reason": "Re-run after the reference file arrived. check_reference_admission: ADMITTED \u2014 foreground coverage 0.266, largest connected component 0.998, no duplicate. probe_image: technical suitability pass, 2000x1104.",
       "command": "python3 forge/stage1_intake/check_reference_admission.py {reference}"
     },
     {
@@ -84,9 +84,9 @@
     {
       "id": "material-evidence",
       "scope": "setup",
-      "status": "skipped",
-      "evidence": [],
-      "reason": "extract_pbr_evidence.py / analyze_texture.py / material_region_analysis.py all need image pixels; the reference is a conversation attachment with no file on disk. PBR channels are agent-vision observations recorded in reference/REFERENCE_ANALYSIS.md layer 5 and wired into the four materials; lookDevTargets.referencePbrExtraction records the accepted limitation.",
+      "status": "done",
+      "evidence": "material-evidence/",
+      "reason": "Re-run after the reference file arrived. extract_pbr_evidence passed on all four crops \u2014 cast-iron 0.716, machined-steel 0.784, oxide-screw 0.794, polished-handle 0.86, against a 0.70 threshold. Only the cast-iron crop was cleanly isolated, and its measured warm-neutral palette is what the authored albedos were corrected against. No extracted map is applied as a texture: the crops are of a lit studio render and would double-light the model.",
       "command": "python3 forge/stage1_intake/material_region_analysis.py --manifest material-regions.json --out-dir material-evidence --out material-analysis.json (single-crop route: analyze_texture.py + extract_pbr_evidence.py per verified crop; otherwise skip with a reason)"
     },
     {
@@ -136,9 +136,9 @@
     {
       "id": "tier1-diagnostics",
       "scope": "pass",
-      "status": "pending",
-      "evidence": [],
-      "reason": "",
+      "status": "done",
+      "evidence": "renders/reference-gates/match.png",
+      "reason": "Re-run after the reference file arrived, at a framing matched to 0.4%. diagnose_render: aspect delta 0.021 PASS (threshold 0.05), scale delta 0.007 PASS (0.08), silhouette IoU 0.837 FAIL (0.85). divine_eye: fidelity 0.681, low-confidence/probe with reconstructionModeSuspected true. interior_difference: 0.128 over 12353 cells.",
       "command": "python3 forge/stage4_review/diagnose_render.py --reference {reference} --render <shot> --spec {spec} --pass-id {pass_id} --in-place"
     },
     {
@@ -514,7 +514,8 @@
       ]
     }
   ],
-  "reviewCursor": 8,
+  "reviewCursor": 9,
   "iterationAction": "new-pass",
-  "stopReason": ""
+  "stopReason": "",
+  "referenceImage": "reference/bench-vise.png"
 }

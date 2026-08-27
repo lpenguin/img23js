@@ -8,3 +8,11 @@ dist/
 # verdicts are kept in reviewHistory rather than the inputs that produced them.
 renders/*/meshes.json
 __pycache__/
+
+# Extracted reference PBR maps are evidence, not assets: they are regenerable from
+# reference/bench-vise.png with extract_pbr_evidence.py and each one is 1024px.
+material-evidence/*_albedo.png
+material-evidence/*_roughness.png
+material-evidence/*_height.png
+material-evidence/*_normal.png
+material-evidence/*_ao.png

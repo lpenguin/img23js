@@ -2,6 +2,8 @@
 
 Rubric: `grimoire/intake/validation_rubric.md`. Verdict: **PASS (conditional on rear inference)**.
 
+Confirmed by `check_reference_admission.py` once the image file arrived: **admitted**, foreground coverage 0.266, largest connected component 0.998 of the foreground, no duplicate. `probe_image.py`: technical suitability **pass**, 2000x1104.
+
 | Criterion | Result | Evidence |
 |---|---|---|
 | one obvious target object | pass | single vise on an empty seamless backdrop, nothing else in frame |
@@ -17,6 +19,6 @@ manufacturing-grade dimensions.
 
 Accepted stylizations, stated up front:
 - jaw-plate serration pitch is approximated (reference pitch is below reliable count resolution);
-- absolute scale is conventional (125 mm jaw width), since the reference carries no scale cue;
+- absolute scale is conventional (102 mm jaw width), since the reference carries no scale cue;
 - the rear half, base underside, nut-boss interior and slide channel interior are reconstructed by
   symmetry/engineering convention and are not observed.

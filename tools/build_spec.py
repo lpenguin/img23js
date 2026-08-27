@@ -20,53 +20,68 @@ from pathlib import Path
 SPEC = Path("object-sculpt-spec.json")
 
 # ---------------------------------------------------------------- landmarks (units)
+# Measured off reference/bench-vise.png (2000x1104). The object's largest connected
+# foreground component (threshold 178, above the contact shadow) spans x 402..1685,
+# y 255..961. Two anchors fix the frame: the jaw top is Y 2.22, the mounting plane is Y 0.
+#
+# Vertical values transfer directly, because both images span the same two semantic
+# landmarks. Horizontal values transfer as a FRACTION of object width, not through the
+# vertical scale: the reference's camera carries an unknown elevation, and elevation
+# inflates measured height without touching width, so a single px/unit derived from the
+# vertical would shorten every X landmark by about 7%. The control render at azimuth 0 and
+# elevation 0 (renders/reference-gates/ortho.png) is what separates the two: it puts this
+# model's own world ratio at 1.866 projected, against 1.731 at the review camera, so the
+# gap between world and projected aspect is camera, not geometry.
 GROUND = 0.0
-BASE_PLATE_TOP = 0.16
-BASE_DISC_R = 0.60
-LOBE_R = 0.26
-LOBE_DIST = 0.72
-LOBE_HOLE_R = 0.09
-COLLAR_TOP = 0.40
-COLLAR_R = 0.50
+BASE_PLATE_TOP = 0.20
+BASE_DISC_R = 0.66
+LOBE_R = 0.29
+LOBE_DIST = 0.79
+LOBE_HOLE_R = 0.10
+COLLAR_TOP = 0.45
+COLLAR_R = 0.56
 
-BODY_BOT = 0.36
-BODY_TOP = 1.66
-BODY_MINUS_X = -0.61
-BODY_PLUS_X = 0.64
-BODY_Z = 1.02
+BODY_BOT = 0.42          # measured junction at Y 0.45; set 0.03 lower so the casting
+                         # overlaps the collar instead of merely touching it
+BODY_TOP = 1.71          # measured: top plateau
+BODY_MINUS_X = -0.619    # width fraction 0.1114
+BODY_PLUS_X = 0.771      # width fraction 0.4330
+BODY_Z = 1.06
 
-SLIDE_Y = 0.96
-SLIDE_H = 0.22
-SLIDE_Z = 0.62
-SLIDE_MINUS_X = -1.05
-SLIDE_PLUS_X = 2.24
+SLIDE_Y = 0.75           # measured: bar spans Y 0.50..1.00 in the jaw gap
+SLIDE_H = 0.50
+SLIDE_Z = 0.72
+SLIDE_MINUS_X = -1.06
+SLIDE_PLUS_X = 2.30
 
-SCREW_Y = 1.30
-SCREW_CORE_R = 0.105
-SCREW_CREST_R = 0.135
+SCREW_Y = 1.21           # measured: thread OD spans Y 1.025..1.395
+SCREW_CORE_R = 0.145
+SCREW_CREST_R = 0.185
 SCREW_TAIL_END = -1.10
-SCREW_HEAD_END = 2.98
-THREAD_PITCH = 0.068
+SCREW_HEAD_END = 2.90
+THREAD_PITCH = 0.075
 
 JAW_TOP = 2.22
-# Slightly narrower than the body casting: at equal width the riser's buried lower
-# edge is coplanar with the casting's front face and shows as a seam line across it.
-JAW_Z = 0.98
-FIXED_JAW_FACE = 1.17
-MOVABLE_JAW_FACE = 1.57
-MIRROR_X = (FIXED_JAW_FACE + MOVABLE_JAW_FACE) / 2.0  # 1.37
+JAW_Z = 1.02
+FIXED_JAW_FACE = 1.094   # width fraction 0.5078
+MOVABLE_JAW_FACE = 1.514 # width fraction 0.6050
+MIRROR_X = (FIXED_JAW_FACE + MOVABLE_JAW_FACE) / 2.0  # 1.304
 
-THRUST_LOBE_X0, THRUST_LOBE_X1 = 2.10, 2.70
-THRUST_RING_C = 2.88
-HEAD_BOSS_C = 3.12
-BAR_LEN = 1.24
-BAR_R = 0.05
-BALL_R = 0.115
-BAR_TILT_X = 0.22
-BAR_TILT_Z = -0.06
-# The bar hangs down through its cross hole in the reference: the top ball sits 0.44 from
-# the screw axis and the bottom ball 0.83, so the bar's midpoint is 0.19 below the hole.
-BAR_SLIDE = -0.19
+THRUST_LOBE_X0, THRUST_LOBE_X1 = 2.11, 2.53
+THRUST_RING_C = 2.64     # knurl band, width fractions 0.8388..0.8909
+HEAD_BOSS_C = 2.95
+BAR_LEN = 1.20           # measured: ball centres 1.20 apart
+BAR_R = 0.048
+BALL_R = 0.125
+BAR_TILT_X = 0.14
+# Sign matters and was wrong: the reference's upper ball sits at X 2.72 and its lower
+# at 2.795, so the bar leans with its BOTTOM toward +X. The negative rotation put the
+# top there instead, and the silhouette difference showed it as a mirrored pair of
+# offsets on the two balls.
+BAR_TILT_Z = 0.0625
+# The bar hangs down through its cross hole: measured ball centres sit at Y 1.70 and 0.50,
+# so the bar's midpoint is 0.11 below the screw axis at Y 1.21.
+BAR_SLIDE = -0.11
 
 HALF_PI = math.pi / 2
 
@@ -106,17 +121,70 @@ def lobe_holes() -> list[dict[str, float]]:
 
 # Body casting side silhouette, authored in world XY then re-based on the pivot.
 BODY_PROFILE_WORLD = [
-    (-0.44, 0.36), (0.46, 0.36), (0.62, 0.70), (0.64, 1.00), (0.64, 1.47),
-    (0.52, 1.62), (0.39, 1.66), (-0.32, 1.66), (-0.61, 1.47), (-0.61, 0.62),
+    (-0.50, 0.42), (0.60, 0.42), (0.74, 0.75), (0.771, 1.10), (0.771, 1.50),
+    (0.72, 1.62), (0.58, 1.68), (0.20, 1.71), (-0.30, 1.71), (-0.57, 1.60),
+    (-0.619, 1.20), (-0.619, 0.70),
 ]
 
 # Fixed jaw riser: convex outer face (-X), deep concave inner scallop (+X) closing to a
 # broad top fillet -- the identity-defining "hook" of the reference.
+# Traced from the reference silhouette, row by row, at 0.038-unit steps: the inner face is
+# an S, not an arc -- it falls back from the plate to X 0.799 at Y 1.731, bulges out again to
+# 0.859 at Y 1.580, then returns to the casting face. An arc through the same endpoints reads
+# as a plain hook and loses the undercut the screw passes through.
 FIXED_RISER_WORLD = [
-    (0.35, 1.28), (0.39, 1.72), (0.45, 2.02), (0.60, 2.16), (0.78, 2.22),
-    (1.09, 2.22), (1.09, 1.80), (1.04, 1.68), (0.95, 1.58), (0.84, 1.52),
-    (0.70, 1.50), (0.54, 1.49),
+    (0.222, 1.400), (0.769, 1.400),
+    (0.769, 1.505), (0.836, 1.543), (0.859, 1.580), (0.849, 1.618), (0.826, 1.656),
+    (0.809, 1.693), (0.799, 1.731), (0.802, 1.768), (0.815, 1.806), (0.843, 1.844),
+    (0.920, 1.881), (1.004, 1.919), (1.030, 1.957), (1.030, 1.978),
+    (0.860, 1.978), (0.860, 2.220), (0.790, 2.220),
+    (0.749, 2.182), (0.611, 2.145), (0.531, 2.107), (0.477, 2.069), (0.430, 2.032),
+    (0.393, 1.994), (0.360, 1.957), (0.333, 1.919), (0.306, 1.881), (0.283, 1.844),
+    (0.259, 1.806), (0.242, 1.768), (0.222, 1.731),
 ]
+
+
+def round_corners(points: list[tuple[float, float]], radius: float,
+                  segments: int = 3) -> list[tuple[float, float]]:
+    """Fillet every corner of a closed 2D outline.
+
+    The generator builds extrusions with `bevelEnabled: false`, so an extruded casting comes
+    out with knife-sharp edges while every edge on the reference casting is filleted -- the
+    single most visible material-independent difference on the comparison sheet. The
+    extrusion's own side silhouette IS the profile, so rounding the profile's corners puts a
+    real fillet exactly where the reference shows one. Corners sharper than the radius can
+    absorb are shortened rather than skipped, so a fillet never overruns its own edge.
+    """
+    n = len(points)
+    out: list[tuple[float, float]] = []
+    for i in range(n):
+        prev, cur, nxt = points[(i - 1) % n], points[i], points[(i + 1) % n]
+        ax, ay = prev[0] - cur[0], prev[1] - cur[1]
+        bx, by = nxt[0] - cur[0], nxt[1] - cur[1]
+        la, lb = math.hypot(ax, ay), math.hypot(bx, by)
+        if la < 1e-9 or lb < 1e-9:
+            out.append(cur)
+            continue
+        ax, ay, bx, by = ax / la, ay / la, bx / lb, by / lb
+        cosang = max(-1.0, min(1.0, ax * bx + ay * by))
+        # A corner that is already almost straight gets no fillet: rounding it only adds
+        # vertices and can fold the outline back on itself.
+        if cosang < -0.985:
+            out.append(cur)
+            continue
+        cut = min(radius, la * 0.45, lb * 0.45)
+        start = (cur[0] + ax * cut, cur[1] + ay * cut)
+        end = (cur[0] + bx * cut, cur[1] + by * cut)
+        out.append(start)
+        for k in range(1, segments):
+            t = k / segments
+            # Quadratic Bezier through the corner: cheap, always inside the original
+            # outline, and tangent to both edges at the fillet's ends.
+            u = 1 - t
+            out.append((u * u * start[0] + 2 * u * t * cur[0] + t * t * end[0],
+                        u * u * start[1] + 2 * u * t * cur[1] + t * t * end[1]))
+        out.append(end)
+    return out
 
 
 def mirror_x(points: list[tuple[float, float]]) -> list[tuple[float, float]]:
@@ -129,25 +197,24 @@ def mirror_x(points: list[tuple[float, float]]) -> list[tuple[float, float]]:
 def jaw_plate_profile(face_x: float, facing: int) -> list[list[float]]:
     """Serrated jaw plate. `facing` is +1 when the teeth point toward +X.
 
-    Teeth are real extruded geometry (horizontal ridges running across the jaw width),
-    not a texture: the reference shows them breaking the plate's silhouette edge.
+    Teeth are real extruded geometry (horizontal ridges running across the jaw width), not
+    relief: the reference shows them breaking the plate's silhouette edge. The two vertical
+    slots on the reference plate are its countersunk fixing screws; they are carried as
+    extruded notches in the same outline rather than as separate parts.
     """
-    back = face_x - facing * 0.14
-    root = face_x - facing * 0.014
+    back = face_x - facing * 0.234
+    root = face_x - facing * 0.013
     crest = face_x
-    tab = face_x + facing * 0.008
-    y_bot, y_top = 1.80, 2.22
-    y_teeth0, y_teeth1 = 1.83, 2.17
-    pitch = 0.022
+    y_bot, y_top = 1.978, 2.220
+    y_teeth0, y_teeth1 = 2.000, 2.200
+    pitch = 0.020
     pts: list[tuple[float, float]] = [(back, y_bot), (root, y_bot)]
     y = y_teeth0
     while y + pitch <= y_teeth1 + 1e-9:
         pts.append((crest, round(y + pitch * 0.5, 4)))
         pts.append((root, round(y + pitch, 4)))
         y += pitch
-    # stepped top tab: stands proud of the tooth crests, a strong silhouette cue
-    pts += [(root, 2.18), (tab, 2.19), (tab, y_top - 0.015), (tab - facing * 0.022, y_top),
-            (back, y_top)]
+    pts += [(root, y_top), (back, y_top)]
     if facing < 0:
         pts = list(reversed(pts))
     return [[round(x, 4), round(y, 4)] for x, y in pts]
@@ -273,11 +340,50 @@ def metal(mid: str, name: str, albedo: str, secondary: list[str], rough: float,
             "reflect renders as flat grey regardless of its roughness value.",
         ],
         "qualityTier": "reference-fidelity",
+        "referencePbr": reference_pbr(mid),
+    }
+
+
+def reference_pbr(material_id: str) -> dict | None:
+    """Record what extract_pbr_evidence.py actually measured for this material.
+
+    `usable` is false on purpose. The extraction passed its confidence threshold, but the crops
+    are of a lit studio render: their albedo carries the reference's own key and environment, so
+    feeding them back as textures onto geometry this scene lights again would double-light it.
+    The evidence is kept because it IS the measurement -- the cast-iron palette here is what the
+    authored albedos were corrected against -- and because a reader deserves to see the numbers
+    rather than a claim about them.
+    """
+    report = Path("material-evidence") / f"{material_id}-report.json"
+    if not report.exists():
+        return None
+    data = json.loads(report.read_text(encoding="utf-8"))
+    stats = data.get("diagnostics", {}).get("mapStats", {})
+    return {
+        "version": "1",
+        "sourceImage": "reference/bench-vise.png",
+        "extractor": "forge/stage1_intake/extract_pbr_evidence.py",
+        "method": "single-image inverse-rendering estimate from an isolated crop",
+        "verdict": data.get("verdict", "unknown"),
+        "usable": False,
+        "hardLimit": "crops are of a lit studio render, so albedo carries the reference's own "
+                     "lighting; applying these maps would double-light the model",
+        "confidence": data.get("confidence", 0.0),
+        "estimatedFidelity": data.get("estimatedFidelity", 0.0),
+        "targetThreshold": data.get("targetThreshold", 0.7),
+        "measuredPalette": data.get("palette", []),
+        "measuredRoughnessBase": stats.get("roughnessBase"),
+        "measuredRoughnessVariation": stats.get("roughnessVariation"),
+        "measuredValueRange": stats.get("valueRange"),
+        "maps": {k: {"url": v.get("url"), "path": v.get("url"), "channel": k,
+                     "source": "reference-pixel-extraction"}
+                 for k, v in (data.get("maps") or {}).items()},
+        "warnings": data.get("warnings", []),
     }
 
 
 MATERIALS = [
-    metal("cast-iron", "Unpainted cast-iron casting", "#8c8f92", ["#83868a", "#95999c"],
+    metal("cast-iron", "Unpainted cast-iron casting", "#8b8a85", ["#7d7c77", "#93928d"],
           0.55, 0.04, 0.012, 0.018, 0.012, 0.05,
           "Sampled from the body side face and the base disc, away from the specular lobe; "
           "the reference's key highlight is not part of the albedo.",
@@ -289,7 +395,7 @@ MATERIALS = [
             "roughness": 0.68, "ao": 0.55,
             "notes": "AO-darkened crevice along the circular swivel parting seam."}],
           repeat=12.0, meso_freq=22.0, micro_freq=70.0),
-    metal("machined-steel", "Machined steel stock", "#9aa0a4", ["#949a9e", "#a2a8ac"],
+    metal("machined-steel", "Machined steel stock", "#a09e99", ["#96948f", "#a8a6a0"],
           0.36, 0.035, 0.01, 0.02, 0.015, 0.07,
           "Sampled from the slide-bar top face and the jaw-plate flanks; brighter and flatter "
           "than the castings beside them.",
@@ -300,7 +406,7 @@ MATERIALS = [
             "roughness": 0.40,
             "notes": "Serration roots hold AO and read rougher than the crests."}],
           repeat=3.0, meso_freq=44.0, micro_freq=130.0),
-    metal("oxide-screw", "Dark-oxide lead screw", "#6f7377", ["#696d71", "#787d81"],
+    metal("oxide-screw", "Dark-oxide lead screw", "#75736e", ["#6a6863", "#7e7c77"],
           0.42, 0.04, 0.012, 0.02, 0.015, 0.09,
           "Sampled between thread crests on the long exposed run; visibly darker than every "
           "casting in the reference.",
@@ -312,7 +418,7 @@ MATERIALS = [
             "notes": "Valleys stay dark and rough; without this the helix reads as a "
                      "painted stripe."}],
           repeat=2.5, meso_freq=48.0, micro_freq=140.0),
-    metal("hardened-jaw", "Hardened serrated jaw plate", "#7f8388", ["#797d81", "#888d91"],
+    metal("hardened-jaw", "Hardened serrated jaw plate", "#85837e", ["#7f7d78", "#8e8c87"],
           0.52, 0.05, 0.015, 0.03, 0.02, 0.09,
           "Sampled on the jaw plate between tooth crests; the reference shows no flare there, so "
           "the plate is rougher and slightly darker than the machined stock beside it.",
@@ -323,11 +429,11 @@ MATERIALS = [
             "notes": "Roots hold occlusion; without it the tooth row reads as stripes painted on "
                      "a flat plate."}],
           repeat=3.5, meso_freq=46.0, micro_freq=132.0),
-    metal("polished-handle", "Near-polished turned handle stock", "#a8adb2",
-          ["#a4a9ae", "#b0b5ba"], 0.24, 0.025, 0.006, 0.012, 0.01, 0.05,
+    metal("polished-handle", "Near-polished turned handle stock", "#c2c0ba",
+          ["#bab8b2", "#ceccc6"], 0.28, 0.03, 0.006, 0.012, 0.01, 0.05,
           "Sampled off-highlight on the tommy bar; the lightest and flattest albedo in the "
           "reference.",
-          [{"id": "ball-hotspot", "region": "handle-ball-ends", "roughness": 0.17,
+          [{"id": "ball-hotspot", "region": "handle-ball-ends", "roughness": 0.22,
             "notes": "The two ball ends carry the lowest roughness and the tightest specular "
                      "lobes anywhere in the reference."}]),
 ]
@@ -340,11 +446,11 @@ def rgba(hex_color: str, alpha: float = 1.0) -> str:
 
 
 MATERIAL_ALBEDO = {
-    "cast-iron": ("#8c8f92", "#7a7d80"),
-    "hardened-jaw": ("#7f8388", "#797d81"),
-    "machined-steel": ("#9aa0a4", "#8b9195"),
-    "oxide-screw": ("#6f7377", "#5e6265"),
-    "polished-handle": ("#a8adb2", "#9aa0a5"),
+    "cast-iron": ("#8b8a85", "#7d7c77"),
+    "hardened-jaw": ("#85837e", "#7f7d78"),
+    "machined-steel": ("#a09e99", "#96948f"),
+    "oxide-screw": ("#75736e", "#6a6863"),
+    "polished-handle": ("#c2c0ba", "#bab8b2"),
 }
 
 
@@ -499,11 +605,11 @@ class Frame:
 FR = Frame()
 
 BODY_PIVOT = (0.0, 0.40, -BODY_Z / 2)
-FIXED_RISER_PIVOT = (0.35, 1.50, -JAW_Z / 2)
-MOV_RISER_PIVOT = (2 * MIRROR_X - 0.35, 1.50, -JAW_Z / 2)
-PLATE_Z = 0.96
-FIXED_PLATE_PIVOT = (FIXED_JAW_FACE, 2.01, -PLATE_Z / 2)
-MOV_PLATE_PIVOT = (MOVABLE_JAW_FACE, 2.01, -PLATE_Z / 2)
+FIXED_RISER_PIVOT = (0.222, 1.60, -JAW_Z / 2)
+MOV_RISER_PIVOT = (2 * MIRROR_X - 0.222, 1.60, -JAW_Z / 2)
+PLATE_Z = 0.94
+FIXED_PLATE_PIVOT = (FIXED_JAW_FACE, 2.10, -PLATE_Z / 2)
+MOV_PLATE_PIVOT = (MOVABLE_JAW_FACE, 2.10, -PLATE_Z / 2)
 SLIDE_PIVOT = ((SLIDE_MINUS_X + SLIDE_PLUS_X) / 2, SLIDE_Y, 0.0)
 SCREW_PIVOT = ((SCREW_TAIL_END + SCREW_HEAD_END) / 2, SCREW_Y, 0.0)
 BAR_PIVOT = (HEAD_BOSS_C, SCREW_Y, 0.0)
@@ -521,18 +627,18 @@ FR.register("base-boss", (0, BASE_PLATE_TOP, 0))
 for i, p in enumerate(BOLT_WORLD, 1):
     FR.register(f"base-bolt-{i}", p)
 FR.register("swivel-collar", (0, BASE_PLATE_TOP, 0))
-FR.register("collar-flange", (0, 0.33, 0))
-FR.register("swivel-lock-bolt", (0.19, 0.28, 0.45), Z_LATHE)
+FR.register("collar-flange", (0, 0.36, 0))
+FR.register("swivel-lock-bolt", (0.19, 0.31, 0.50), Z_LATHE)
 FR.register("body-casting", BODY_PIVOT)
-FR.register("body-plateau-pad", (-0.04, 1.70, 0))
-FR.register("body-foot-fastener", (0.02, 0.52, 0.47), Z_LATHE)
-FR.register("nut-boss", (0.70, SCREW_Y, 0), X_LATHE)
+FR.register("body-plateau-pad", (-0.19, 1.695, 0))
+FR.register("body-foot-fastener", (0.02, 0.60, 0.50), Z_LATHE)
+FR.register("nut-boss", (0.82, SCREW_Y, 0), X_LATHE)
 FR.register("fixed-jaw-riser", FIXED_RISER_PIVOT)
-FR.register("fixed-jaw-gusset", (0.44, 1.34, 0))
+FR.register("fixed-jaw-gusset", (0.40, 1.54, 0))
 FR.register("fixed-jaw-plate", FIXED_PLATE_PIVOT)
 FR.register("slide-carriage", SLIDE_PIVOT)
 FR.register("movable-jaw-riser", MOV_RISER_PIVOT)
-FR.register("movable-jaw-gusset", (2 * MIRROR_X - 0.44, 1.34, 0))
+FR.register("movable-jaw-gusset", (2 * MIRROR_X - 0.40, 1.54, 0))
 FR.register("movable-jaw-plate", MOV_PLATE_PIVOT)
 FR.register("thrust-lobe", ((THRUST_LOBE_X0 + THRUST_LOBE_X1) / 2, SCREW_Y, 0), X_LATHE)
 FR.register("thrust-ring", (THRUST_RING_C, SCREW_Y, 0), X_LATHE)
@@ -596,15 +702,15 @@ def build_components() -> list[dict]:
                     "edgeTreatment": {"type": "fillet", "bevelRadius": 0.008, "segments": 2},
                     "deformationStack": [], "uvStrategy": "cylindrical",
                     "normalStrategy": "vertex normals from generated geometry",
-                    "latheProfile": lathe([(0.0, -0.02), (0.57, -0.02), (0.57, 0.06),
-                                           (0.53, 0.10), (0.0, 0.10)])},
+                    "latheProfile": lathe([(0.0, -0.02), (0.62, -0.02), (0.62, 0.07),
+                                           (0.58, 0.12), (0.0, 0.12)])},
         rationale="Surface of revolution about the swivel axis; a lathed profile reproduces the "
                   "seat step exactly where a box stack would fake it.",
         importance=0.4, confidence=0.6, material="cast-iron",
         evidence=("base-collar-parting-line",),
-        attachment=attach("base-plate", "swivel-axis", (0, 0, 0), (0, 0.10, 0),
+        attachment=attach("base-plate", "swivel-axis", (0, 0, 0), (0, 0.12, 0),
                           "flush-seat", 0.04, evidence=("base-collar-parting-line",)),
-        collider="cylinder", collider_scale=(1.14, 0.12, 1.14), fracture="vise-base")
+        collider="cylinder", collider_scale=(1.24, 0.14, 1.24), fracture="vise-base")
 
     for i in range(1, 5):
         add(f"base-bolt-{i}", "base-plate", name=f"Base mounting bolt head {i}", level="micro",
@@ -613,14 +719,14 @@ def build_components() -> list[dict]:
                         "edgeTreatment": {"type": "chamfer", "bevelRadius": 0.004, "segments": 1},
                         "deformationStack": [], "uvStrategy": "cylindrical",
                         "normalStrategy": "flat-shaded facets",
-                        "latheProfile": hex_head(0.088, -0.01, 0.075)},
+                        "latheProfile": hex_head(0.095, -0.01, 0.08)},
             rationale="Six flats around one axis: a six-segment revolve is the hex head itself, "
                       "not a cylinder standing in for one.",
             importance=0.3, confidence=0.6, material="machined-steel",
             evidence=("base-front-lobes",),
-            attachment=attach("base-plate", "swivel-axis", (0, 0, 0), (0, 0.075, 0),
+            attachment=attach("base-plate", "swivel-axis", (0, 0, 0), (0, 0.08, 0),
                               "seated-in-counterbore", 0.02, evidence=("base-front-lobes",)),
-            collider="cylinder", collider_scale=(0.18, 0.075, 0.18), fracture="vise-base",
+            collider="cylinder", collider_scale=(0.19, 0.08, 0.19), fracture="vise-base",
             surface={"macroRoughness": 0.05, "microRoughness": 0.04, "bumpAmplitude": 0.0,
                      "normalPattern": "none", "displacementPattern": "none",
                      "occlusionPattern": "counterbore shadow ring", "edgeWearPattern": "none",
@@ -637,9 +743,9 @@ def build_components() -> list[dict]:
                     # normal pointing into the material, which reads as a surface fold to
                     # self_intersection.py -- and a cast seam has relieved corners anyway.
                     "latheProfile": lathe(
-                        [(0.0, 0.08), (0.50, 0.08)]
-                        + smooth_groove(0.50, 0.098, 0.152, 0.030)
-                        + [(0.50, 0.20), (0.455, 0.24), (0.0, 0.24)])},
+                        [(0.0, 0.09), (0.56, 0.09)]
+                        + smooth_groove(0.56, 0.110, 0.170, 0.032)
+                        + [(0.56, 0.22), (0.50, 0.25), (0.0, 0.25)])},
         rationale="One surface of revolution about the swivel axis; the recessed parting seam is "
                   "a step in the revolved profile, so it holds a real shadow from every angle.",
         importance=0.7, confidence=0.7, material="cast-iron",
@@ -649,10 +755,10 @@ def build_components() -> list[dict]:
                              "foot disc; built as profile geometry, never a dark line.", "meso")],
         animation_role="swivel", pivot_axis=(0, 1, 0),
         channels={"rotate": True, "detach": False},
-        sockets=[socket("body-seat", (0, 0.24, 0), note="Seat the body casting rides on.")],
-        attachment=attach("base-plate", "swivel-axis", (0, 0, 0), (0, 0.24, 0),
+        sockets=[socket("body-seat", (0, 0.25, 0), note="Seat the body casting rides on.")],
+        attachment=attach("base-plate", "swivel-axis", (0, 0, 0), (0, 0.25, 0),
                           "rotating-socket", 0.06, evidence=("base-collar-parting-line",)),
-        collider="cylinder", collider_scale=(1.00, 0.24, 1.00), fracture="vise-body")
+        collider="cylinder", collider_scale=(1.12, 0.25, 1.12), fracture="vise-body")
 
     add("collar-flange", "swivel-collar", name="Swivel collar upper flange", level="meso",
         role="flange", primitive="lathe",
@@ -660,8 +766,8 @@ def build_components() -> list[dict]:
                     "edgeTreatment": {"type": "fillet", "bevelRadius": 0.008, "segments": 2},
                     "deformationStack": [], "uvStrategy": "cylindrical",
                     "normalStrategy": "vertex normals from generated geometry",
-                    "latheProfile": lathe([(0.0, 0.0), (0.505, 0.0), (0.505, 0.03),
-                                           (0.45, 0.07), (0.0, 0.07)])},
+                    "latheProfile": lathe([(0.0, 0.0), (0.555, 0.0), (0.555, 0.035),
+                                           (0.50, 0.09), (0.0, 0.09)])},
         rationale="A revolved taper: the flange reads as a cone frustum in the reference and any "
                   "faceted stand-in would break the circular highlight running around it.",
         importance=0.35, confidence=0.55, material="cast-iron",
@@ -700,7 +806,8 @@ def build_components() -> list[dict]:
             "edgeTreatment": {"type": "chamfer", "bevelRadius": 0.02, "segments": 2},
             "deformationStack": [], "uvStrategy": "generated procedural coordinates",
             "normalStrategy": "vertex normals from generated geometry",
-            "profile2D": {"points": rebase(BODY_PROFILE_WORLD, BODY_PIVOT[0], BODY_PIVOT[1]),
+            "profile2D": {"points": rebase(round_corners(BODY_PROFILE_WORLD, 0.075),
+                                        BODY_PIVOT[0], BODY_PIVOT[1]),
                           "depth": BODY_Z},
         },
         rationale="The casting's identity is entirely in its side outline — narrow foot, "
@@ -734,11 +841,11 @@ def build_components() -> list[dict]:
                     "normalStrategy": "vertex normals from generated geometry"},
         rationale="A flat-topped rectangular pad: a box with chamfered edges is the shape, and "
                   "its top face is the flat the reference shows behind the fixed jaw.",
-        scale=(0.52, 0.06, 0.66), importance=0.4, confidence=0.5, material="cast-iron",
+        scale=(0.50, 0.055, 0.86), importance=0.4, confidence=0.5, material="cast-iron",
         evidence=("body-top-plateau",),
         attachment=attach("body-casting", "jaw-riser-root", (0, 0, 0), (0, 0.06, 0),
                           "flush-overlap", 0.03, evidence=("body-top-plateau",)),
-        collider="box", collider_scale=(0.52, 0.06, 0.66))
+        collider="box", collider_scale=(0.50, 0.055, 0.86))
 
     add("body-foot-fastener", "body-casting", name="Body foot fastener", level="micro",
         role="fastener", primitive="lathe",
@@ -765,8 +872,8 @@ def build_components() -> list[dict]:
                     "edgeTreatment": {"type": "fillet", "bevelRadius": 0.01, "segments": 2},
                     "deformationStack": [], "uvStrategy": "cylindrical",
                     "normalStrategy": "vertex normals from generated geometry",
-                    "latheProfile": lathe([(0.0, -0.09), (0.20, -0.09), (0.20, 0.05),
-                                           (0.17, 0.09), (0.0, 0.09)])},
+                    "latheProfile": lathe([(0.0, -0.10), (0.255, -0.10), (0.255, 0.06),
+                                           (0.215, 0.10), (0.0, 0.10)])},
         rationale="Concentric with the screw axis; revolving the step profile keeps the collar "
                   "circular from every azimuth, which a boxed stand-in cannot do.",
         importance=0.5, confidence=0.6, material="cast-iron",
@@ -783,8 +890,8 @@ def build_components() -> list[dict]:
             "edgeTreatment": {"type": "fillet", "bevelRadius": 0.03, "segments": 3},
             "deformationStack": [], "uvStrategy": "generated procedural coordinates",
             "normalStrategy": "vertex normals from generated geometry",
-            "profile2D": {"points": rebase(FIXED_RISER_WORLD, FIXED_RISER_PIVOT[0],
-                                           FIXED_RISER_PIVOT[1]),
+            "profile2D": {"points": rebase(round_corners(FIXED_RISER_WORLD, 0.035),
+                                           FIXED_RISER_PIVOT[0], FIXED_RISER_PIVOT[1]),
                           "depth": JAW_Z},
         },
         rationale="The hook is a constant-width profile swept across the jaw width: the concave "
@@ -888,8 +995,8 @@ def build_components() -> list[dict]:
             "edgeTreatment": {"type": "fillet", "bevelRadius": 0.03, "segments": 3},
             "deformationStack": [], "uvStrategy": "generated procedural coordinates",
             "normalStrategy": "vertex normals from generated geometry",
-            "profile2D": {"points": rebase(mirror_x(FIXED_RISER_WORLD), MOV_RISER_PIVOT[0],
-                                           MOV_RISER_PIVOT[1]),
+            "profile2D": {"points": rebase(round_corners(mirror_x(FIXED_RISER_WORLD), 0.035),
+                                           MOV_RISER_PIVOT[0], MOV_RISER_PIVOT[1]),
                           "depth": JAW_Z},
         },
         rationale="Same constant-width hook as the fixed riser, reflected about the jaw-gap "
@@ -956,9 +1063,9 @@ def build_components() -> list[dict]:
                     "edgeTreatment": {"type": "fillet", "bevelRadius": 0.03, "segments": 3},
                     "deformationStack": [], "uvStrategy": "cylindrical",
                     "normalStrategy": "vertex normals from generated geometry",
-                    "latheProfile": lathe([(0.14, -0.30), (0.38, -0.30), (0.41, -0.24),
-                                           (0.41, 0.18), (0.37, 0.26), (0.26, 0.30),
-                                           (0.14, 0.30)])},
+                    "latheProfile": lathe([(0.19, -0.21), (0.37, -0.21), (0.40, -0.15),
+                                           (0.40, 0.13), (0.36, 0.18), (0.27, 0.21),
+                                           (0.19, 0.21)])},
         rationale="A body of revolution about the screw axis: the reference's rounded end lobe "
                   "keeps a circular outline as the vise turns, which only a revolve gives.",
         importance=0.75, confidence=0.65, material="cast-iron",
@@ -975,8 +1082,8 @@ def build_components() -> list[dict]:
                     "edgeTreatment": {"type": "chamfer", "bevelRadius": 0.008, "segments": 2},
                     "deformationStack": [], "uvStrategy": "cylindrical",
                     "normalStrategy": "vertex normals from generated geometry",
-                    "latheProfile": lathe([(0.11, -0.10), (0.25, -0.10), (0.26, -0.08),
-                                           (0.26, 0.08), (0.25, 0.10), (0.11, 0.10)])},
+                    "latheProfile": lathe([(0.15, -0.11), (0.28, -0.11), (0.29, -0.09),
+                                           (0.29, 0.09), (0.28, 0.11), (0.15, 0.11)])},
         rationale="Turned stock revolved about the screw axis; the knurl ridges are instanced "
                   "on top of it rather than carved into the revolve, so the ring stays circular.",
         importance=0.6, confidence=0.6, material="oxide-screw",
@@ -998,17 +1105,17 @@ def build_components() -> list[dict]:
                     "edgeTreatment": {"type": "chamfer", "bevelRadius": 0.006, "segments": 2},
                     "deformationStack": [], "uvStrategy": "cylindrical",
                     "normalStrategy": "vertex normals from generated geometry",
-                    "latheProfile": lathe([(0.0, -0.10), (0.11, -0.10), (0.11, 0.08),
-                                           (0.09, 0.10), (0.0, 0.10)])},
+                    "latheProfile": lathe([(0.0, -0.20), (0.115, -0.20), (0.115, 0.16),
+                                           (0.095, 0.20), (0.0, 0.20)])},
         rationale="Turned round stock on the screw axis; the bar passes through it, so it must "
                   "stay a body of revolution for the bar to read as free to slide.",
         importance=0.5, confidence=0.6, material="oxide-screw",
         evidence=("handle-ball-ends",),
         sockets=[socket("bar-cross-hole", (0.0, 0.0, 0.0),
                         note="Cross hole the tommy bar slides through.")],
-        attachment=attach("thrust-ring", "thrust-face", (0, 0, 0), (0, 0.20, 0),
+        attachment=attach("thrust-ring", "thrust-face", (0, 0, 0), (0, 0.40, 0),
                           "butt", 0.03),
-        collider="cylinder", collider_scale=(0.22, 0.20, 0.22), fracture="vise-screw")
+        collider="cylinder", collider_scale=(0.23, 0.40, 0.23), fracture="vise-screw")
 
     add("tommy-bar", "screw-head-boss", name="Tommy bar", level="macro",
         role="handle", primitive="lathe",
@@ -1249,12 +1356,13 @@ def build_spec() -> dict:
     macro_meso = macro + ids_by_level["meso"]
     every = macro_meso + ids_by_level["micro"]
 
-    spec["sourceImage"] = "reference/REFERENCE_ANALYSIS.md"
+    spec["sourceImage"] = "reference/bench-vise.png"
     spec["sourceImageNote"] = (
-        "The reference was supplied as a conversation attachment and is readable by agent vision "
-        "only; no image file exists on disk. Every measurement in this spec is an agent-vision "
-        "reading recorded in reference/REFERENCE_ANALYSIS.md, and every pixel-level script gate "
-        "is recorded as skipped-with-reason in .img2threejs/state.json."
+        "2000x1104. Supplied first as a conversation attachment, then as a file, which is what "
+        "made the pixel gates runnable. Landmarks in this spec are measured off the object's "
+        "largest connected foreground component (threshold 178, above the contact shadow), "
+        "spanning x 402..1685, y 255..961; vertical values transfer directly and horizontal ones "
+        "as a fraction of object width. Working notes: reference/REFERENCE_ANALYSIS.md."
     )
     spec["suitability"] = "conditional"
     # 0-3 scale, per grimoire/intake/validation_rubric.md.
@@ -1323,8 +1431,8 @@ def build_spec() -> dict:
     spec["repetitionSystems"] = [
         {"id": "knurl-ridge-ring", "name": "Axial knurl ridge ring", "level": "micro",
          "parent": "thrust-ring", "count": 44, "primitive": "box", "material": "oxide-screw",
-         "instanceScale": [0.035, 0.17, 0.035],
-         "placement": {"mode": "radial", "axis": [0, 1, 0], "radius": 0.53,
+         "instanceScale": [0.035, 0.19, 0.035],
+         "placement": {"mode": "radial", "axis": [0, 1, 0], "radius": 0.58,
                        "startAngleDeg": 0,
                        "notes": "Axis is the screw axis expressed in the thrust ring's own "
                                 "frame; radius is the emitter's diameter-form parameter."},
@@ -1333,8 +1441,8 @@ def build_spec() -> dict:
          "elementComponentIds": []},
         {"id": "base-mount-bolt-set", "name": "Base mounting bolt set", "level": "micro",
          "parent": "base-plate", "count": 4, "primitive": "lathe", "material": "machined-steel",
-         "instanceScale": [0.176, 0.075, 0.176],
-         "placement": {"mode": "radial", "axis": [0, 0, 1], "radius": 1.44,
+         "instanceScale": [0.19, 0.08, 0.19],
+         "placement": {"mode": "radial", "axis": [0, 0, 1], "radius": 1.58,
                        "startAngleDeg": -45,
                        "notes": "Authored as four real hex-head components rather than instanced, "
                                 "because the emitter's instance primitive cannot carry the "
@@ -1344,19 +1452,19 @@ def build_spec() -> dict:
          "elementComponentIds": [f"base-bolt-{i}" for i in range(1, 5)]},
         {"id": "jaw-serration-rows", "name": "Jaw plate serration rows", "level": "micro",
          "parent": "fixed-jaw-plate", "count": 8, "primitive": "extrude",
-         "material": "machined-steel", "instanceScale": [0.014, 0.022, 0.96],
+         "material": "machined-steel", "instanceScale": [0.013, 0.020, 0.94],
          "placement": {"mode": "linear", "axis": [0, 1, 0], "radius": 0.0,
                        "startAngleDeg": 0,
                        "notes": "Built into each plate's extruded outline: the teeth must break "
                                 "the plate's silhouette edge, which instancing on top of a "
                                 "smooth plate would not do."},
-         "distributionRule": "0.022 pitch up the plate face, teeth 0.014 deep",
+         "distributionRule": "0.020 pitch up the plate face, teeth 0.013 deep",
          "evidenceRefs": ["jaw-plate-serrations"],
          "elementComponentIds": ["fixed-jaw-plate", "movable-jaw-plate"]},
         {"id": "base-lobe-set", "name": "Four-lobed base outline", "level": "meso",
          "parent": "base-plate", "count": 4, "primitive": "extrude", "material": "cast-iron",
-         "instanceScale": [0.52, 0.14, 0.52],
-         "placement": {"mode": "radial", "axis": [0, 0, 1], "radius": 1.44,
+         "instanceScale": [0.58, 0.20, 0.58],
+         "placement": {"mode": "radial", "axis": [0, 0, 1], "radius": 1.58,
                        "startAngleDeg": -45,
                        "notes": "Built into the plate's plan outline as a union of one disc and "
                                 "four lobe circles, so the scalloped valleys between lobes are "
@@ -1366,8 +1474,8 @@ def build_spec() -> dict:
          "elementComponentIds": ["base-plate"]},
         {"id": "thread-turn-set", "name": "Acme thread turns", "level": "meso",
          "parent": "lead-screw-shaft", "count": 26, "primitive": "tapered-sweep",
-         "material": "oxide-screw", "instanceScale": [0.03, 0.068, 0.03],
-         "placement": {"mode": "helical", "axis": [1, 0, 0], "radius": 0.24,
+         "material": "oxide-screw", "instanceScale": [0.04, 0.075, 0.04],
+         "placement": {"mode": "helical", "axis": [1, 0, 0], "radius": 0.33,
                        "startAngleDeg": 0,
                        "notes": "A helix is one continuous ridge, not a stack of separate turns; "
                                 "it is swept as a single tapered sweep per exposed run."},
@@ -1633,11 +1741,15 @@ def finalize(spec, macro, macro_meso, every) -> dict:
     look = spec["lookDevTargets"]["materialPass"]["referencePbrExtraction"]
     look["requiredWhenSourceImagePresent"] = False
     look["acceptedLimitation"] = (
-        "Pixel-level extraction is impossible here: the reference exists only as a conversation "
-        "attachment with no file on disk, so extract_pbr_evidence.py has nothing to read. PBR "
-        "channels are agent-vision observations recorded in reference/REFERENCE_ANALYSIS.md and "
-        "calibrated against the reference's specular behaviour, which is weaker evidence than "
-        "extraction and is reported as such."
+        "extract_pbr_evidence.py RAN on four crops of reference/bench-vise.png and passed on all "
+        "four (cast-iron 0.716, machined-steel 0.784, oxide-screw 0.794, polished-handle 0.86 "
+        "against a 0.70 threshold); the maps are in material-evidence/ and are recorded in each "
+        "material's referencePbr block. They are NOT applied as textures: the crops come from a "
+        "lit studio render, so their albedo carries the reference's own lighting, and projecting "
+        "that onto geometry this scene lights again would double-light it. Only the cast-iron "
+        "crop was cleanly isolated (value range 0.087, wholly inside the body face); its measured "
+        "warm-neutral palette is what the authored albedos were corrected to. The other three "
+        "crops caught backdrop, so their palettes are recorded as evidence but not adopted."
     )
     return spec
 

@@ -1,0 +1,89 @@
+{
+  "ok": true,
+  "verdict": "pass",
+  "confidence": 0.716,
+  "estimatedFidelity": 0.716,
+  "targetThreshold": 0.7,
+  "materialId": "cast-iron",
+  "sourceImage": "/home/user/img23js/material-evidence/crop-cast-iron.png",
+  "outDir": "/home/user/img23js/material-evidence",
+  "palette": [
+    "#7B7A76",
+    "#757570",
+    "#807F7B",
+    "#686763",
+    "#8F8D89"
+  ],
+  "maps": {
+    "albedo": {
+      "path": "/home/user/img23js/material-evidence/cast-iron_albedo.png",
+      "url": "cast-iron_albedo.png",
+      "channel": "albedo",
+      "source": "reference-pixel-extraction"
+    },
+    "roughness": {
+      "path": "/home/user/img23js/material-evidence/cast-iron_roughness.png",
+      "url": "cast-iron_roughness.png",
+      "channel": "roughness",
+      "source": "reference-pixel-extraction"
+    },
+    "height": {
+      "path": "/home/user/img23js/material-evidence/cast-iron_height.png",
+      "url": "cast-iron_height.png",
+      "channel": "height",
+      "source": "reference-pixel-extraction"
+    },
+    "normal": {
+      "path": "/home/user/img23js/material-evidence/cast-iron_normal.png",
+      "url": "cast-iron_normal.png",
+      "channel": "normal",
+      "source": "reference-pixel-extraction"
+    },
+    "ao": {
+      "path": "/home/user/img23js/material-evidence/cast-iron_ao.png",
+      "url": "cast-iron_ao.png",
+      "channel": "ao",
+      "source": "reference-pixel-extraction"
+    }
+  },
+  "diagnostics": {
+    "sourceWidth": 240,
+    "sourceHeight": 180,
+    "mapSize": 1024,
+    "cropBBoxPixels": {
+      "x": 0,
+      "y": 0,
+      "width": 240,
+      "height": 180
+    },
+    "mask": {
+      "backgroundColor": "#7B7C79",
+      "backgroundNoise": 20.224,
+      "transparentPixelFraction": 0.0,
+      "foregroundCoverage": 1.0
+    },
+    "mapStats": {
+      "valueRange": 0.0874,
+      "heightP90Gradient": 0.03892,
+      "roughnessBase": 0.706,
+      "roughnessVariation": 0.075,
+      "normalStrength": 0.202,
+      "blurRadius": 21
+    },
+    "palette": [
+      "#7B7A76",
+      "#757570",
+      "#807F7B",
+      "#686763",
+      "#8F8D89"
+    ]
+  },
+  "warnings": [
+    "foreground mask is tiny; material extraction is likely unreliable",
+    "image is not clearly isolated from background; using most pixels as material evidence",
+    "object/background separation is weak",
+    "single-image inverse rendering cannot prove true physical PBR; confidence is capped",
+    "low value range weakens height/roughness inference"
+  ],
+  "limitation": "single-image PBR extraction is an estimate; 70%+ extraction confidence still needs render screenshot review"
+}

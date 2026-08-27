@@ -79,7 +79,7 @@
    "kind": "part",
    "module": "swivel-collar",
    "level": "macro",
-   "triangles": 36
+   "triangles": 152
   },
   {
    "name": "body-plateau-pad",
@@ -111,7 +111,7 @@
    "kind": "part",
    "module": "body-casting",
    "level": "macro",
-   "triangles": 44
+   "triangles": 352
   },
   {
    "name": "fixed-jaw-gusset",
@@ -127,7 +127,7 @@
    "kind": "part",
    "module": "fixed-jaw-riser",
    "level": "meso",
-   "triangles": 144
+   "triangles": 92
   },
   {
    "name": "slide-carriage",
@@ -143,7 +143,7 @@
    "kind": "part",
    "module": "slide-carriage",
    "level": "macro",
-   "triangles": 44
+   "triangles": 352
   },
   {
    "name": "movable-jaw-gusset",
@@ -159,7 +159,7 @@
    "kind": "part",
    "module": "movable-jaw-riser",
    "level": "meso",
-   "triangles": 144
+   "triangles": 92
   },
   {
    "name": "thrust-lobe",
@@ -223,7 +223,7 @@
    "kind": "part",
    "module": "lead-screw-shaft",
    "level": "meso",
-   "triangles": 4716
+   "triangles": 4296
   },
   {
    "name": "screw-thread-tail",
@@ -231,7 +231,7 @@
    "kind": "part",
    "module": "lead-screw-shaft",
    "level": "meso",
-   "triangles": 852
+   "triangles": 756
   }
  ],
  "unnamedMeshes": 0,
